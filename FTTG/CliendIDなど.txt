@@ -1,0 +1,4 @@
+クライアントID
+526026380597-3hg0v2rhqbpnoehlh5lbvmkcd4svpe94.apps.googleusercontent.com
+クライアントシークレット
+AmVLD_e-Ar0co5-vwnOPOc7F
