@@ -30,6 +30,10 @@ class ScheduleTest:
         f.close()
         return lines1
 
+    # tweetから読み込み
+    def readtweetschedule():
+        
+
     def main():
         creds = None
 
