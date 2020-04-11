@@ -24,7 +24,7 @@ class ScheduleTest:
 
     # 読み取り
     def readschedule():
-        f = open('schedule.txt')
+        f = open('schedule.txt', encoding='utf-8')
         data1 = f.read()
         lines1 = data1.split('\n')
         f.close()
@@ -32,7 +32,18 @@ class ScheduleTest:
 
     # tweetから読み込み
     def readtweetschedule():
-        
+        # search param setting
+        screen_name = "arai_rehabili"
+
+
+        params = {
+            'q':screen_name,
+            'lang':'ja',
+            'result_type':'recent',
+            'count':10
+            }
+        #
+        #
 
     def main():
         creds = None
@@ -82,10 +93,14 @@ class ScheduleTest:
 
         # 内容部
         for i in ScheduleTest.readschedule():
-            txtl = i.split(' ')
+
+
+            txtl = i.split('@')
 
             # 内容の無い行をスキップ
             if(len(txtl) == 1): continue
+            # コメント行をスキップ
+            if("#" is i[0]): continue
 
             # 開始日時,終了日時設定
             year_s = year
@@ -95,32 +110,35 @@ class ScheduleTest:
             day_s = int(txtl[0])
             day_e = int(txtl[0])
 
+            # 変動する挿入データの設定
+
+            # Hour Minutu
             # [day text]
             if(len(txtl) == 2):
-                hour_s = 0
-                min_s = 0
-                hour_e = 0
-                min_e = 0
+                ins = {'hour_s', 0}
+                ins = {'min_s', 0}
+                ins = {'hour_e', 0}
+                ins = {'min_e', 0}
                 txt_i = 1
-
             # [day time text]
             elif(len(txtl[1]) == 4):
-                hour_s = int(txtl[1][0:2])
-                hour_e = int(txtl[1][0:2])
-                min_s = int(txtl[1][2:4])
-                min_e = int(txtl[1][2:4])
+                ins = {'hour_s', int(txtl[1][0:2])}
+                ins = {'min_s', int(txtl[1][2:4])}
+                ins = {'hour_e', int(txtl[1][0:2])}
+                ins = {'min_e', int(txtl[1][2:4])}
                 txt_i = 2
-
             # [day time-time text]
             elif(len(txtl[1]) == 9):
-                hour_s = int(txtl[1][0:2])
-                min_s = int(txtl[1][2:4])
-                hour_e = int(txtl[1][5:7])
-                min_e = int(txtl[1][7:9])
+                ins = {'hour_s', int(txtl[1][0:2])}
+                ins = {'min_s', int(txtl[1][2:4])}
+                ins = {'hour_e', int(txtl[1][5:7])}
+                ins = {'min_e', int(txtl[1][7:9])}
                 txt_i = 2
 
-            print("hour_s : " + str(hour_s))
-            print("min_s : " + str(min_s))
+            # text
+            ins = {'txt', txtl[txt_i]}
+            print(ins)
+
             # 12月の処理
             if(mon == 12 and day_e == 31):
                 year_e = year + 1
@@ -132,15 +150,15 @@ class ScheduleTest:
 
             # 挿入データ設定
             event = {
-                'summary': '{}'.format(txtl[txt_i]),
+                'summary': '{}'.format(ins['txt']),
                 'location': 'aliesan\'s nest',
-                'description': '{}'.format(txtl[txt_i]),
+                'description': '{}'.format(),
                 'start': {
-                    'dateTime': '{0}-{1:02}-{2}T{3:02}:{4:02}:{5:02}'.format(year_s, mon_s, day_s, hour_s, min_s, 0),
+                    'dateTime': '{0}-{1:02}-{2}T{3:02}:{4:02}:{5:02}'.format(year_s, mon_s, day_s, ins['hour_s'], ins['min_s'], 0),
                     'timeZone': 'Japan',
                 },
                 'end': {
-                    'dateTime': '{0}-{1:02}-{2}T{3:02}:{4:02}:{5:02}'.format(year_e, mon_e, day_e, hour_e, min_e, 0),
+                    'dateTime': '{0}-{1:02}-{2}T{3:02}:{4:02}:{5:02}'.format(year_e, mon_e, day_e, ins['hour_e'], ins['min_e'], 0),
                     'timeZone': 'Japan',
                 },
             }
@@ -150,6 +168,16 @@ class ScheduleTest:
             event = service.events().insert(calendarId='arai.rehabilitation@gmail.com', body=event).execute()
             print(event['id'])
 
+            # 挿入値をクリア
+            ins.clear()
+        # /内容部
+
+    # twitterセッション取得
+    def createSession():
+        session = OAuth1Session(TCK, TCS, TAK, TAS)
+        # session = OAuth1Session(os.environ['CONSUMER_KEY'],os.environ['CONSUMER_SECRET'],\
+        #                         os.environ['ACCESS_KEY'], os.environ['ACCESS_TOKEN_SECRET'])
+        return session
 
 if __name__ == '__main__':
   ScheduleTest.main()
