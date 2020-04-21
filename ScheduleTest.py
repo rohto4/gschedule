@@ -42,20 +42,20 @@ class ScheduleTest:
             'result_type':'recent',
             'count':10
             }
-        #
-        #
 
     def main():
         creds = None
 
-        # token.pickle ファイルは
-        # 認証フローの初回完了時に作成される
+        '''
+        弄らない
+        '''
+        # token.pickle ファイルは認証フローの初回完了時に作成される
         # access token & refresh tokemnを保持する
         if os.path.exists('token.pickle'):
             with open('token.pickle', 'rb') as token:
                 creds = pickle.load(token)
 
-        # 有効な資格情報が無い場合、ログインする
+        # 有効な資格情報の読込、確認、取得、ログイン
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
@@ -70,12 +70,13 @@ class ScheduleTest:
 
         # 対象のカレンダーを取得
         service = build('calendar', 'v3', credentials=creds)
-
-        # ??
         ScheduleTest.readschedule()
         print(ScheduleTest.readschedule())
+        '''
+        /弄らない
+        '''
 
-        ### テキスト処理 ###
+        ### 挿入用テキスト処理 ###
 
         # 日付取り出し
         yearmon = ScheduleTest.readschedule()[0]
@@ -93,25 +94,19 @@ class ScheduleTest:
 
         # 内容部
         for i in ScheduleTest.readschedule():
-
-
-            txtl = i.split('@')
-
-            # 内容の無い行をスキップ
+            # 一行を分割
+            txtl = i.split('_')
+            # 改行のみの行をスキップ
             if(len(txtl) == 1): continue
             # コメント行をスキップ
             if("#" is i[0]): continue
 
-            # 開始日時,終了日時設定
-            year_s = year
-            year_e = year
-            mon_s = mon
-            mon_e = mon
-            day_s = int(txtl[0])
-            day_e = int(txtl[0])
+            # start date, end date設定
+            year_s = year_e = year
+            mon_s = mon_e = mon
+            day_s = day_e = int(txtl[0])
 
-            # 変動する挿入データの設定
-
+            # 変動する挿入テキストの設定
             # Hour Minutu
             # [day text]
             if(len(txtl) == 2):
@@ -154,11 +149,13 @@ class ScheduleTest:
                 'location': 'aliesan\'s nest',
                 'description': '{}'.format(),
                 'start': {
-                    'dateTime': '{0}-{1:02}-{2}T{3:02}:{4:02}:{5:02}'.format(year_s, mon_s, day_s, ins['hour_s'], ins['min_s'], 0),
+                    'dateTime': '{0}-{1:02}-{2}T{3:02}:{4:02}:{5:02}'
+                    .format(year_s, mon_s, day_s, ins['hour_s'], ins['min_s'], 0),
                     'timeZone': 'Japan',
                 },
                 'end': {
-                    'dateTime': '{0}-{1:02}-{2}T{3:02}:{4:02}:{5:02}'.format(year_e, mon_e, day_e, ins['hour_e'], ins['min_e'], 0),
+                    'dateTime': '{0}-{1:02}-{2}T{3:02}:{4:02}:{5:02}'
+                    .format(year_e, mon_e, day_e, ins['hour_e'], ins['min_e'], 0),
                     'timeZone': 'Japan',
                 },
             }
