@@ -11,14 +11,8 @@ from google.auth.transport.requests import Request
 
 # 初期設定
 search_url = 'https://api.twitter.com/1.1/search/tweets.json'# 検索用URL設定
-
-TCK = 'o46La2iGb7bIn41XyXqHyYw8A'                             # Consumer Key
-TCS = 'eTeaiw1nJ71KNgH2AwU6cQkgbByk6ZLfi58FEel6ENrsNAm5gR'    # Consumer Secret
-TAT = '773885677507321856-bypmqmScqUcCPAuEQRuhRDllEqtXXeT'    # Access Token
-TAS = 'pGq6OYipTDRzRtv8QXI0cdCZ2yWkXIYNLvv91fh8Cob61'         # Accesss Token Secert
-
-# googleCalendar
-SCOPE = ['https://www.googleapis.com/auth/calendar']
+SCOPE = ['https://www.googleapis.com/auth/calendar'] # GoogleCalendar
+TCK, TCS, TAK, TAS = None
 
 class ScheduleTest:
 
@@ -50,8 +44,8 @@ class ScheduleTest:
         creds = None
         # token.pickle ファイルは認証フローの初回完了時に作成される
         # access token & refresh tokemnを保持する
-        if os.path.exists('token.pickle'):
-            with open('token.pickle', 'rb') as token:
+        if os.path.exists('../auth/token.pickle'):
+            with open('../auth/token.pickle', 'rb') as token:
                 creds = pickle.load(token)
 
         # 有効な資格情報の読込、確認、取得、ログイン
@@ -60,11 +54,11 @@ class ScheduleTest:
                 creds.refresh(Request())
             else:
                 flow = InstalledAppFlow.from_client_secrets_file(
-                    'credentials.json', SCOPE)
+                    '../auth/credentials.json', SCOPE)
                 creds = flow.run_local_server(port=0)
 
             # 次回実行のため、資格情報保存
-            with open('token.pickle', 'wb') as token:
+            with open('../auth/token.pickle', 'wb') as token:
                 pickle.dump(creds, token)
 
         # 対象のカレンダーを取得
@@ -162,10 +156,19 @@ class ScheduleTest:
 
     # twitterセッション取得
     def createSession():
+        f = open('../auth/twitter', encoding='utf-8')
+        data = f.read()
+        keys = data.split('\n')
+        TCK = keys[0].split(' ')[0]
+        TCS = keys[1].split(' ')[0]
+        TAK = keys[2].split(' ')[0]
+        TAS = keys[3].split(' ')[0]
+        f.close()
+        session = OAuth1Session(TCK, TCS, TAK, TAS)
         # session = OAuth1Session(os.environ['CONSUMER_KEY'],os.environ['CONSUMER_SECRET'],\
         #                         os.environ['ACCESS_KEY'], os.environ['ACCESS_TOKEN_SECRET'])
-        session = OAuth1Session(TCK, TCS, TAK, TAS)
         return session
+
 
 if __name__ == '__main__':
   ScheduleTest.main()
