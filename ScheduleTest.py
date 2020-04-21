@@ -3,6 +3,8 @@ from __future__ import print_function
 import datetime
 import pickle
 import os.path
+import sys
+import json
 from requests_oauthlib import OAuth1Session
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -12,28 +14,64 @@ from google.auth.transport.requests import Request
 # 初期設定
 search_url = 'https://api.twitter.com/1.1/search/tweets.json'# 検索用URL設定
 SCOPE = ['https://www.googleapis.com/auth/calendar'] # GoogleCalendar
-TCK, TCS, TAK, TAS = None
+TCK = TCS = TAK = TAS = None
 
 class ScheduleTest:
 
     # 読み取り
-    def readschedule():
+    def readTextSchedule():
         f = open('schedule.txt', encoding='utf-8')
         data1 = f.read()
         lines1 = data1.split('\n')
         f.close()
         return lines1
 
+    # twitterセッション取得
+    def createSession():
+        f = open('../auth/twitter', encoding='utf-8')
+        data = f.read()
+        keys = data.split('\n')
+        TCK = keys[0].split(' ')[0]
+        TCS = keys[1].split(' ')[0]
+        TAK = keys[2].split(' ')[0]
+        TAS = keys[3].split(' ')[0]
+        f.close()
+        session = OAuth1Session(TCK, TCS, TAK, TAS)
+        # session = OAuth1Session(os.environ['CONSUMER_KEY'],os.environ['CONSUMER_SECRET'],\
+        #                         os.environ['ACCESS_KEY'], os.environ['ACCESS_TOKEN_SECRET'])
+        return session
+
     # tweetから読み込み
-    def readtweetschedule():
+    def readTweetSchedule(session):
         # search param setting
-        screen_name = "arai_rehabili"
+        q = "@arai_rehabili \"2020.04\""
         params = {
-            'q':screen_name,
+            'q':q,
             'lang':'ja',
             'result_type':'recent',
             'count':10
             }
+        # check
+        # print(params)
+
+        # 検索実施
+        res = session.get(search_url, params = params)
+        res_text = json.loads(res.text)
+        # check
+        print(res_text)
+
+        if res.headers['X-Rate-Limit-Remaining'] is not None:
+            print ('アクセス可能回数 %s' % res.headers['X-Rate-Limit-Remaining'])
+            print ('リセット時間 %s' % res.headers['X-Rate-Limit-Reset'])
+        else:
+            print('ヘッダが正常に取得できませんでした')
+
+        for tweet_data in res_text['statuses']:
+            print(tweet_data['created_at'])
+            # check
+            print(tweet_data['text'])
+            print("-----")
+
 
     # credentials.json または token.pickle を使用し、
     # GoogleCalendar を取得する
@@ -70,10 +108,20 @@ class ScheduleTest:
         # GoogleCalendar を取得する
         calendar = ScheduleTest.readCalendar()
 
+        # 引数に応じて読み込み先を変える
+        read_data = None
+        if len(sys.argv) == 2 and sys.argv[1] == "t" :
+            # tweet
+            session = ScheduleTest.createSession()
+            read_data = ScheduleTest.readTweetSchedule(session)
+        else:
+            # txtfile
+            read_data = ScheduleTest.readTextSchedule()
+
         ### 挿入用テキスト処理 ###
 
         # 日付取り出し
-        yearmon = ScheduleTest.readschedule()[0]
+        yearmon = read_data[0]
         tmp_ym = yearmon.split(".")
         year = int(tmp_ym[0])
         mon = int(tmp_ym[1])
@@ -87,7 +135,7 @@ class ScheduleTest:
             num_days = 30
 
         # 内容部
-        for txt in ScheduleTest.readschedule():
+        for txt in data:
             # 一行を分割
             line_txt = txt.split('_')
             # 改行のみの行をスキップ
@@ -154,20 +202,6 @@ class ScheduleTest:
             ins.clear()
         # /内容部
 
-    # twitterセッション取得
-    def createSession():
-        f = open('../auth/twitter', encoding='utf-8')
-        data = f.read()
-        keys = data.split('\n')
-        TCK = keys[0].split(' ')[0]
-        TCS = keys[1].split(' ')[0]
-        TAK = keys[2].split(' ')[0]
-        TAS = keys[3].split(' ')[0]
-        f.close()
-        session = OAuth1Session(TCK, TCS, TAK, TAS)
-        # session = OAuth1Session(os.environ['CONSUMER_KEY'],os.environ['CONSUMER_SECRET'],\
-        #                         os.environ['ACCESS_KEY'], os.environ['ACCESS_TOKEN_SECRET'])
-        return session
 
 
 if __name__ == '__main__':
