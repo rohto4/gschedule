@@ -24,8 +24,6 @@ class ScheduleTest:
     def readTextSchedule():
         f = open('schedule.txt', encoding='utf-8')
         data1 = f.read()
-        lines1 = data1.split('\n')
-        f.close()
         return lines1
 
     # twitterセッション取得
@@ -71,7 +69,9 @@ class ScheduleTest:
         # output check
         now = datetime.datetime.now()
         str_now = now.strftime('%Y%m%d_%H%M%S')
-        writeJsonData('log/tweet_' + str_now + '.json', res_text['statuses'])
+
+        # check json
+        # writeJsonData('log/tweet_' + str_now + '.json', res_text['statuses'])
 
         # check
         for tweet_data in res_text['statuses']:
@@ -80,11 +80,14 @@ class ScheduleTest:
             print(tweet_data['text'])
             print("-----")
 
-        # 
-
         # 対象のツイート群を返す
+        result_text = []
+        for tweet_data in res_text['statuses']:
+            result_text.append(tweet_data['text'])
 
-
+        # check
+        print(result_text)
+        return result_text
 
     # credentials.json または token.pickle を使用し、
     # GoogleCalendar を取得する
@@ -133,87 +136,96 @@ class ScheduleTest:
 
         ### 挿入用テキスト処理 ###
 
-        # 日付取り出し
-        yearmon = read_data[0]
-        tmp_ym = yearmon.split(".")
-        year = int(tmp_ym[0])
-        mon = int(tmp_ym[1])
-
-        # チェック用比較用カレンダー設定
-        if mon == 1 or mon == 3 or mon == 5 or mon == 7 or mon == 8 or mon == 10 or mon == 12:
-            num_days = 31
-        elif mon == 2:
-            num_days = 28
-        else :
-            num_days = 30
-
-        # 内容部
-        for txt in data:
-            # 一行を分割
-            line_txt = txt.split('_')
-            # 改行のみの行をスキップ
-            if(len(line_txt) == 1): continue
-            # コメント行をスキップ
-            if("#" is i[0]): continue
-
-            # start date, end date設定
-            year_s = year_e = year
-            mon_s = mon_e = mon
-            day_s = day_e = int(line_txt[0])
-
-            # 変動する挿入テキストの設定
-            # Hour Minutu
-            # [day text]
-            if(len(line_txt) == 2):
-                ins = {'hour_s': 0, 'min_s': 0, 'hour_e': 0, 'min_e': 0}
-                txt_i = 1
-            # [day time text]
-            elif(len(line_txt[1]) == 4):
-                ins = {'hour_s': int(line_txt[1][0:2]), 'min_s': int(line_txt[1][2:4]),
-                       'hour_e': int(line_txt[1][0:2]), 'min_e': int(line_txt[1][2:4])}
-                txt_i = 2
-            # [day time-time text]
-            elif(len(line_txt[1]) == 9):
-                ins = {'hour_s': int(line_txt[1][0:2]), 'min_s': int(line_txt[1][2:4]),
-                       'hour_e': int(line_txt[1][5:7]), 'min_e': int(line_txt[1][7:9])}
-                txt_i = 2
-            ins['txt'] = line_txt[txt_i]
+        # データ分繰り返す
+        for data in read_data:
+            # 日付取り出し
             # check
-            # print(ins)
+            # print(data)
 
-            # 12月の処理
-            if(mon == 12 and day_e == 31):
-                year_e = year + 1
-
-            if(num_days == day_e):
-                day_e = 1
-                if mon == 12: mon_e = 1
-                else: mon_e = mon_e + 1
-
-            # 挿入データ設定
-            event = {
-                'summary': '{}'.format(ins.get('txt')),
-                'location': 'aliesan\'s nest',
-                'description': '',
-                'start': {
-                    'dateTime': '{0}-{1:02}-{2}T{3:02}:{4:02}:{5:02}'
-                    .format(year_s, mon_s, day_s, ins.get('hour_s'), ins.get('min_s'), 0),
-                    'timeZone': 'Japan',
-                },
-                'end': {
-                    'dateTime': '{0}-{1:02}-{2}T{3:02}:{4:02}:{5:02}'
-                    .format(year_e, mon_e, day_e, ins.get('hour_e'), ins.get('min_e'), 0),
-                    'timeZone': 'Japan',
-                },
-            }
+            data_lines = data.split('\n')
+            yearmon = data_lines[0]
+            tmp_ym = yearmon.split(".")
             # check
-            # print(event)
+            # print(tmp_ym)
 
-            # 挿入
-            event = calendar.events().insert(calendarId='arai.rehabilitation@gmail.com', body=event).execute()
-            # 挿入値をクリア
-            ins.clear()
-        # /内容部
+            year = int(tmp_ym[0])
+            mon = int(tmp_ym[1][:2])
+
+            # チェック用比較用カレンダー設定
+            if mon == 1 or mon == 3 or mon == 5 or mon == 7 or mon == 8 or mon == 10 or mon == 12:
+                num_days = 31
+            elif mon == 2:
+                num_days = 28
+            else :
+                num_days = 30
+
+            # 内容部
+            for txt in data:
+                # 一行を分割
+                line_txt = txt.split('_')
+                # 改行のみの行をスキップ
+                if(len(line_txt) == 1): continue
+                # コメント行をスキップ
+                if("#" is i[0]): continue
+
+                # start date, end date設定
+                year_s = year_e = year
+                mon_s = mon_e = mon
+                day_s = day_e = int(line_txt[0])
+
+                # 変動する挿入テキストの設定
+                # Hour Minutu
+                # [day text]
+                if(len(line_txt) == 2):
+                    ins = {'hour_s': 0, 'min_s': 0, 'hour_e': 0, 'min_e': 0}
+                    txt_i = 1
+                # [day time text]
+                elif(len(line_txt[1]) == 4):
+                    ins = {'hour_s': int(line_txt[1][0:2]), 'min_s': int(line_txt[1][2:4]),
+                           'hour_e': int(line_txt[1][0:2]), 'min_e': int(line_txt[1][2:4])}
+                    txt_i = 2
+                # [day time-time text]
+                elif(len(line_txt[1]) == 9):
+                    ins = {'hour_s': int(line_txt[1][0:2]), 'min_s': int(line_txt[1][2:4]),
+                           'hour_e': int(line_txt[1][5:7]), 'min_e': int(line_txt[1][7:9])}
+                    txt_i = 2
+                ins['txt'] = line_txt[txt_i]
+                # check
+                # print(ins)
+
+                # 12月の処理
+                if(mon == 12 and day_e == 31):
+                    year_e = year + 1
+
+                if(num_days == day_e):
+                    day_e = 1
+                    if mon == 12: mon_e = 1
+                    else: mon_e = mon_e + 1
+
+                # 挿入データ設定
+                event = {
+                    'summary': '{}'.format(ins.get('txt')),
+                    'location': 'aliesan\'s nest',
+                    'description': '',
+                    'start': {
+                        'dateTime': '{0}-{1:02}-{2}T{3:02}:{4:02}:{5:02}'
+                        .format(year_s, mon_s, day_s, ins.get('hour_s'), ins.get('min_s'), 0),
+                        'timeZone': 'Japan',
+                    },
+                    'end': {
+                        'dateTime': '{0}-{1:02}-{2}T{3:02}:{4:02}:{5:02}'
+                        .format(year_e, mon_e, day_e, ins.get('hour_e'), ins.get('min_e'), 0),
+                        'timeZone': 'Japan',
+                    },
+                }
+                # check
+                # print(event)
+
+                # 挿入
+                event = calendar.events().insert(calendarId='arai.rehabilitation@gmail.com', body=event).execute()
+                # 挿入値をクリア
+                ins.clear()
+            # /内容部
 
 
 
