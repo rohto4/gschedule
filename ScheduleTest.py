@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
-import datetime
-import pickle
-import os.path
-import sys
-import json
+import datetime, pickle, os.path, sys, json
 from requests_oauthlib import OAuth1Session
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+from datetime import date
+
+# user define class
+#@UnresolvedImport
+from util.JsonUtil import readJsonData, writeBreakStatus, writeJsonData, addJsonData
+
 
 
 # 初期設定
@@ -44,21 +46,21 @@ class ScheduleTest:
     # tweetから読み込み
     def readTweetSchedule(session):
         # search param setting
-        q = "@arai_rehabili \"2020.04\""
+        q = 'arai_rehabili "2020.04g"'
         params = {
             'q':q,
             'lang':'ja',
             'result_type':'recent',
-            'count':10
+            'count':100
             }
         # check
         # print(params)
 
         # 検索実施
         res = session.get(search_url, params = params)
-        res_text = json.loads(res.text)
         # check
-        print(res_text)
+        # print(res_text)
+        res_text = json.loads(res.text)
 
         if res.headers['X-Rate-Limit-Remaining'] is not None:
             print ('アクセス可能回数 %s' % res.headers['X-Rate-Limit-Remaining'])
@@ -66,11 +68,22 @@ class ScheduleTest:
         else:
             print('ヘッダが正常に取得できませんでした')
 
+        # output check
+        now = datetime.datetime.now()
+        str_now = now.strftime('%Y%m%d_%H%M%S')
+        writeJsonData('log/tweet_' + str_now + '.json', res_text['statuses'])
+
+        # check
         for tweet_data in res_text['statuses']:
+            print(tweet_data['user']['name'])
             print(tweet_data['created_at'])
-            # check
             print(tweet_data['text'])
             print("-----")
+
+        # 
+
+        # 対象のツイート群を返す
+
 
 
     # credentials.json または token.pickle を使用し、
