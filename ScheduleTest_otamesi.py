@@ -16,6 +16,8 @@ from util.JsonUtil import readJsonData, writeBreakStatus, writeJsonData, addJson
 # 初期設定
 search_url = 'https://api.twitter.com/1.1/search/tweets.json'# 検索用URL設定
 SCOPE = ['https://www.googleapis.com/auth/calendar'] # GoogleCalendar
+CHECK_SCOPE = ['https://www.googleapis.com/auth/calendar.events.readonly'] # 重複Check用GoogleCalendar
+EVENTS_SCOPE = ['https://www.googleapis.com/calendar/v3/calendars/calendarId/events']
 TCK = TCS = TAK = TAS = None
 
 class ScheduleTest:
@@ -91,7 +93,7 @@ class ScheduleTest:
 
     # credentials.json または token.pickle を使用し、
     # GoogleCalendar を取得する
-    def readCalendar():
+    def readWriteCalendar():
         '''
         /弄らない
         '''
@@ -118,18 +120,62 @@ class ScheduleTest:
         # 対象のカレンダーを取得
         return build('calendar', 'v3', credentials=creds)
 
+
+    def readCalendarEvents():
+        '''
+        ----------
+        '''
+        creds = None
+        # token.pickle ファイルは認証フローの初回完了時に作成される
+        # access token & refresh tokemnを保持する
+        if os.path.exists('../auth/token.pickle'):
+            with open('../auth/token.pickle', 'rb') as token:
+                creds = pickle.load(token)
+
+        # 有効な資格情報の読込、確認、取得、ログイン
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            else:
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    '../auth/credentials.json', SCOPE)
+                creds = flow.run_local_server(port=0)
+
+            # 次回実行のため、資格情報保存
+            with open('../auth/token.pickle', 'wb') as token:
+                pickle.dump(creds, token)
+
+        calendar = build('calendar', 'v3', credentials=creds)
+        '''
+        ----------
+        '''
+
+        events_result = calendar.events().list(calendarId='arai.rehabilitation@gmail.com',
+                                  maxResults=10).execute()
+        events = events_result.get('items', [])
+        if not events:
+            print('No upcoming events found.')
+
+        for event in events:
+            start = event['start'].get('dateTime', event['start'].get('date'))
+            print(start, event['summary'])
+        # 4/22 これのテストまで完了
+        # 本ファイルに移し、token取得部を共通関数にする
+
     # 対象日付のタイトルが挿入済みであれば
     # is_insert = False を返却
     def checkOverlapSchedule(calendar, event):
-        if :
+        if True :
             return False
-        else :
-            return True
+        # else :
+        #     return True
 
     def main():
+        ScheduleTest.readCalendarEvents()
+        exit()
         # credentials.json または token.pickle を使用し、
         # GoogleCalendar を取得する
-        calendar = ScheduleTest.readCalendar()
+        calendar = ScheduleTest.readWriteCalendar()
 
         # 引数に応じて読み込み先を変える
         read_data = None
@@ -218,10 +264,8 @@ class ScheduleTest:
                     if mon == 12: mon_e = 1
                     else: mon_e = mon_e + 1
 
-                ins_dateTime_s = '{0}-{1:02}-{2}T{3:02}:{4:02}:{5:02}'
-                                 .format(year_s, mon_s, day_s, ins.get('hour_s'), ins.get('min_s'), 0)
-                ins_datetime_e = '{0}-{1:02}-{2}T{3:02}:{4:02}:{5:02}'
-                                 .format(year_e, mon_e, day_e, ins.get('hour_e'), ins.get('min_e'), 0)
+                ins_dateTime_s = '{0}-{1:02}-{2}T{3:02}:{4:02}:{5:02}'.format(year_s, mon_s, day_s, ins.get('hour_s'), ins.get('min_s'), 0)
+                ins_datetime_e = '{0}-{1:02}-{2}T{3:02}:{4:02}:{5:02}'.format(year_e, mon_e, day_e, ins.get('hour_e'), ins.get('min_e'), 0)
 
                 # 挿入データ設定
                 event = {
